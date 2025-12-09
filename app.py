@@ -1,5 +1,5 @@
 import streamlit as st
-from databaseoff import DatabaseManager
+from database import DatabaseManager
 from ui_processor import render_processor
 from ui_dashboard import render_dashboard
 from ui_history import render_history_manager
@@ -30,4 +30,5 @@ def main():
     db_manager.close()
 
 if __name__ == "__main__":
+
     main()
