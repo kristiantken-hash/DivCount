@@ -143,14 +143,21 @@ df_itens["Categoria"] = df_itens["item"].apply(
             )
 
             # Sugestão de categoria
-            categoria_sugerida = row["Categoria"]
+            categorias_opcoes = [
+                "Hortifruti", "Carnes", "Bebidas",
+                "Padaria", "Limpeza", "Higiene", "Geral",
+            ]
+            cat_sugerida = row["Categoria"] if row.get("Categoria") else "Geral"
+            idx_cat = categorias_opcoes.index(cat_sugerida) if cat_sugerida in categorias_opcoes else len(categorias_opcoes) - 1
+            
             categoria_escolhida = c4.selectbox(
                 "Categoria",
-                ["Hortifruti", "Carnes", "Bebidas", "Padaria", "Limpeza", "Higiene", "Geral"],
-                index=0,  # pode melhorar usando um mapeamento de índice
+                categorias_opcoes,
+                index=idx_cat,
                 key=f"cat_{idx}",
                 label_visibility="collapsed",
             )
+
 
             total_nota += valor_item
 
@@ -201,4 +208,5 @@ df_itens["Categoria"] = df_itens["item"].apply(
             st.rerun()
         else:
             st.error("Erro ao salvar nota. Tente novamente.")
+
 
