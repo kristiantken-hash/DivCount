@@ -102,27 +102,36 @@ class DatabaseManager:
         return result[0] if result else None
 
     def learn_item(self, item_nome, categoria):
-        data_hoje = datetime.now().strftime("%Y-%m-%d")
+        data_hoje = datetime.now().date()
         cur = self.conn.cursor()
-        # Sintaxe Postgres para "Upsert" (Inserir ou Atualizar)
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO memoria_itens (item_nome, categoria, ultima_atualizacao)
             VALUES (%s, %s, %s)
-            ON CONFLICT (item_nome) 
-            DO UPDATE SET categoria = EXCLUDED.categoria, ultima_atualizacao = EXCLUDED.ultima_atualizacao;
-        """, (item_nome, categoria, data_hoje))
+            ON CONFLICT (item_nome)
+            DO UPDATE SET categoria = EXCLUDED.categoria,
+                          ultima_atualizacao = EXCLUDED.ultima_atualizacao;
+            """,
+            (item_nome, categoria, data_hoje),
+        )
         self.conn.commit()
         cur.close()
 
+
     # --- SALVAR NOTA ---
     def save_invoice(self, data_nota, loja, total_nota, pagador, forma_pagamento, itens_processados):
-        data_registro = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # data_nota vem como string "dd/mm/YYYY" da UI: converte para date
+        data_compra_date = datetime.strptime(data_nota, "%d/%m/%Y").date()
+        data_registro = datetime.now()  # datetime completo
         cur = self.conn.cursor()
         try:
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO notas (data_compra, loja, total_nota, pagador, forma_pagamento, data_registro)
                 VALUES (%s, %s, %s, %s, %s, %s) RETURNING id;
-            """, (data_nota, loja, total_nota, pagador, forma_pagamento, data_registro))
+                """,
+                (data_compra_date, loja, total_nota, pagador, forma_pagamento, data_registro),
+            )
             
             nota_id = cur.fetchone()[0] # Pega o ID gerado
 
@@ -149,14 +158,17 @@ class DatabaseManager:
 
     # --- SALVAR REEMBOLSO ---
     def save_reimbursement(self, pagador, recebedor, valor):
-        data_hoje = datetime.now().strftime("%Y-%m-%d")
-        data_registro = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        data_hoje = datetime.now().date()
+        data_registro = datetime.now()
         cur = self.conn.cursor()
         try:
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO reembolsos (data_pagamento, pagador, recebedor, valor, data_registro)
                 VALUES (%s, %s, %s, %s, %s);
-            """, (data_hoje, pagador, recebedor, valor, data_registro))
+                """,
+                (data_hoje, pagador, recebedor, valor, data_registro),
+            )
             self.conn.commit()
             cur.close()
             return True
@@ -221,4 +233,5 @@ class DatabaseManager:
             return False
 
     def close(self):
+
         self.conn.close()
